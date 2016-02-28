@@ -36,6 +36,8 @@ namespace BSP
 
         public int MAX_LEAF_AREA = 1000;
         public int MIN_LEAF_SIDE = 10;
+
+        public int MIN_ROOM_SIDE = 4;
         //
 
         public BSPDrawer Drawer;
@@ -52,6 +54,8 @@ namespace BSP
             root = new BinaryNode(new Coordinate(0, 0), DUN_WIDTH, DUN_HEIGHT);
            
             Divide(root);
+
+            GenRooms(root);
 
             this.Drawer.DrawNode(root);
         }
@@ -86,6 +90,24 @@ namespace BSP
 
             Divide(node.Leaves[0]);
             Divide(node.Leaves[1]);
+        }
+
+        void GenRooms(BinaryNode node)
+        {
+            if (node == null)
+                return;
+
+            var newPos = new Coordinate ();
+            newPos.X = Random.Range(node.Pos.X, node.Pos.X + node.Width/2);
+            newPos.Y = Random.Range(node.Pos.Y, node.Pos.Y + node.Height/2);
+
+            node.Width = Random.Range(MIN_ROOM_SIDE, node.Width - (newPos.X - node.Pos.X) );
+            node.Height = Random.Range(MIN_ROOM_SIDE, node.Height - (newPos.Y - node.Pos.Y) );
+
+            node.Pos = newPos;
+
+            GenRooms(node.Leaves[0]);
+            GenRooms(node.Leaves[1]);
         }
     }
 }

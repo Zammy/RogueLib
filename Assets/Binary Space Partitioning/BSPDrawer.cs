@@ -26,14 +26,17 @@ namespace BSP
 
             foreach (var node in nodes)
             {
-                Draw (node, depth);
-
                 foreach(var leaf in node.Leaves)
                 {
                     if (leaf != null)
                     {
                         leaves.Add(leaf);
                     }
+                }
+
+                if (leaves.Count == 0)
+                {
+                    Draw (node, depth);
                 }
 
                 yield return new WaitForSeconds(this.DrawSpeed);
