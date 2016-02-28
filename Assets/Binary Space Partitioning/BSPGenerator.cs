@@ -11,6 +11,8 @@ namespace BSP
 
         public BinaryNode[] Leaves = new BinaryNode[2];
 
+        public Room Room {get; private set; }
+
         public BinaryNode(Coordinate pos, int width, int height)
         {
             this.Pos = pos;
@@ -22,6 +24,28 @@ namespace BSP
         {
             return this.Width * this.Height;
         }
+
+        public void GenRoom(int MIN_ROOM_SIDE)
+        {
+            var room = new Room();
+
+            var newPos = new Coordinate ();
+            newPos.X = Random.Range(0, this.Width/2);
+            newPos.Y = Random.Range(0, this.Height/2);
+            room.Pos = newPos;
+
+            room.Width = Random.Range(MIN_ROOM_SIDE, this.Width - newPos.X  );
+            room.Height = Random.Range(MIN_ROOM_SIDE, this.Height - newPos.Y );
+
+            this.Room = room;
+        }
+    }
+
+    public class Room
+    {
+        public Coordinate Pos;
+        public int Width;
+        public int Height;
     }
 
 
@@ -67,7 +91,6 @@ namespace BSP
                 return;
             }
 
-
 //            int direction  = Random.Range(0, 2);
             int direction = 0;
             if (node.Width < node.Height)
@@ -78,14 +101,14 @@ namespace BSP
             if (direction == 0) // split vertically
             {
                 int x = Random.Range(MIN_LEAF_SIDE, node.Width-MIN_LEAF_SIDE);
-                node.Leaves[0] = new BinaryNode(new Coordinate(node.Pos), x, node.Height);
-                node.Leaves[1] = new BinaryNode(new Coordinate(node.Pos.X + x, node.Pos.Y), node.Width - x, node.Height);
+                node.Leaves[0] = new BinaryNode(new Coordinate(), x, node.Height);
+                node.Leaves[1] = new BinaryNode(new Coordinate(x, 0), node.Width - x, node.Height);
             }
             else // split horizontally
             {
                 int y = Random.Range(MIN_LEAF_SIDE, node.Height-MIN_LEAF_SIDE);
-                node.Leaves[0] = new BinaryNode(new Coordinate(node.Pos), node.Width, y);
-                node.Leaves[1] = new BinaryNode(new Coordinate(node.Pos.X, node.Pos.Y + y), node.Width, node.Height - y);
+                node.Leaves[0] = new BinaryNode(new Coordinate(), node.Width, y);
+                node.Leaves[1] = new BinaryNode(new Coordinate(0, y), node.Width, node.Height - y);
             }
 
             Divide(node.Leaves[0]);
@@ -97,14 +120,7 @@ namespace BSP
             if (node == null)
                 return;
 
-            var newPos = new Coordinate ();
-            newPos.X = Random.Range(node.Pos.X, node.Pos.X + node.Width/2);
-            newPos.Y = Random.Range(node.Pos.Y, node.Pos.Y + node.Height/2);
-
-            node.Width = Random.Range(MIN_ROOM_SIDE, node.Width - (newPos.X - node.Pos.X) );
-            node.Height = Random.Range(MIN_ROOM_SIDE, node.Height - (newPos.Y - node.Pos.Y) );
-
-            node.Pos = newPos;
+            node.GenRoom(MIN_ROOM_SIDE);
 
             GenRooms(node.Leaves[0]);
             GenRooms(node.Leaves[1]);
