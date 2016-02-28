@@ -9,9 +9,18 @@ public class LevelGeneratorEditor : Editor
     {
         base.OnInspectorGUI();
 
-        if (GUILayout.Button("Gen"))
+        if (GUILayout.Button("Step"))
         {
-            ((LevelGenerator)target).Go();
+            bool done = ((LevelGenerator)target).Step();
+            if (done)
+            {
+                EditorUtility.DisplayDialog("Gen", "Generated all rooms!", "ok");
+            }
+        }
+
+        if (GUILayout.Button("GenAndDrawAll"))
+        {
+            ((LevelGenerator)target).GenerateAndDrawWholeDungeon();
         }
     }
 

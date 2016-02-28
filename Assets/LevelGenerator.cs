@@ -2,60 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public struct Coordinate
-{
-    public int X;
-    public int Y;
-
-    public Coordinate (int x, int y)
-    {
-        this.X = x;
-        this.Y = y;
-    }
-
-    public static bool operator ==(Coordinate a, Coordinate b) 
-    {
-        return a.X == b.X && a.Y == b.Y;
-    }
-
-    public static bool operator !=(Coordinate a, Coordinate b) 
-    {
-        return !(a.X == b.X && a.Y == b.Y);
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is Coordinate)
-        {
-            return this == (Coordinate)obj;
-        }
-        return base.Equals(obj);
-    }
-
-    public override int GetHashCode()
-    {
-        return 17 + this.X + this.Y * 23;
-    }
-
-    public override string ToString()
-    {
-        return string.Format("({0}, {1})", this.X, this.Y);
-    }
-}
-
-public enum TileType
-{
-    Wall,
-    Ground,
-    Start,
-    End
-}
-
-public struct Tile
-{
-    public Coordinate Pos;
-    public TileType Type;
-}
 
 public class LevelGenerator : MonoBehaviour
 {
@@ -123,7 +69,57 @@ public class LevelGenerator : MonoBehaviour
 
         public Coordinate GetRandomSpaceInsideRoom()
         {
-            return new Coordinate( this.Pos.X + 1 + Random.Range(0, this.Width-2), this.Pos.Y + 1 + Random.Range(0, this.Height -2) );
+            return new Coordinate( this.Pos.X + 1 + Random.Range(0, this.Width-1), this.Pos.Y + 1 + Random.Range(0, this.Height -1) );
+        }
+
+        public void AddRandomDoorToRoom()
+        {
+            Coordinate doorPos;
+
+            List<Direction> allDirections = new List<Direction>() { Direction.Up, Direction.Down, Direction.Left, Direction.Right };
+            foreach (var door in this.Doors)
+            {
+                if (door.Rooms[0] == this)
+                {
+                    allDirections.Remove(door.Dir);
+                }
+                else
+                {
+                    allDirections.Remove(door.Dir.Opposite());
+                }
+            }
+            Direction dir = allDirections[Random.Range(0, allDirections.Count)];
+            switch(dir)
+            {
+                case Direction.Up:
+                {
+                    doorPos.X = this.Pos.X + Random.Range(1, this.Width);
+                    doorPos.Y = this.Pos.Y + this.Height;
+                    break;
+                }
+                case Direction.Right:
+                {
+                    doorPos.X = this.Pos.X + this.Width;
+                    doorPos.Y = this.Pos.Y + Random.Range(1, this.Height);
+                    break;
+                }
+                case Direction.Down:
+                {
+                    doorPos.X = this.Pos.X + Random.Range(1, this.Width);
+                    doorPos.Y = this.Pos.Y;
+                    break;
+                }
+                case Direction.Left:
+                {
+                    doorPos.X = this.Pos.X;
+                    doorPos.Y = this.Pos.Y + Random.Range(1, this.Height);
+                    break;
+                }
+                default:
+                    throw new UnityException("Nope!");
+            }
+
+            this.Doors.Add(new Door(doorPos, dir, this));
         }
 
         public void AddDoor(Door door)
@@ -147,199 +143,166 @@ public class LevelGenerator : MonoBehaviour
     public int Room_MaxDoorCount;
     public int Room_Number;
 
+    List<Room> rooms = new List<Room>();
+
     void Start () 
     {
         Random.seed = this.Seed;
     }
 
-    public void Go()
+    public void GenerateAndDrawWholeDungeon()
     {
-        var tiles = this.Generate();
-        this.LevelDrawer.Draw(tiles);
-    }
-
-    List<Room> rooms = new List<Room>();
-
-    public List<Tile> Generate()
-    {
-        this.rooms.Clear();
-              
-        var tiles = new List<Tile>();
-        var startRoom = GenStartRoom();
-        rooms.Add(startRoom);
-
-        //add starting tile
-        var startPos = startRoom.GetRandomSpaceInsideRoom();
-        tiles.Add(new Tile()
-        {
-            Pos = startPos,
-            Type = TileType.Start
-        });
-
-        this.TryGenRoom();
-
+        this.Generate();
+       
+        this.LevelDrawer.ClearRooms();
         foreach(Room room in this.rooms)
         {
-            for (int x = 0; x <= room.Width; x++)
-            {
-                for (int y = 0; y <= room.Height; y++)
-                {
-                    var pos = new Coordinate( x + room.Pos.X, y + room.Pos.Y );
-                    var tile = new Tile()
-                    {
-                        Pos = pos,
-                        Type = TileType.Ground
-                    };
-
-                    if (pos == startPos)
-                    {
-                        tile.Type = TileType.Start;
-                    }
-                    else if ( (x == 0 || y == 0 || x == room.Width || y == room.Height) 
-                        && !room.IsDoorOn( pos ))
-                    {
-                        tile.Type = TileType.Wall;
-                    }
-                    tiles.Add(tile);
-                }
-            }
+            this.LevelDrawer.DrawRoom( GetTilesForRoom(room) );
         }
-
-        return tiles;
     }
 
-    Room GenStartRoom()
+    public bool Step()
     {
-        var room = new Room()
+        if (this.rooms.Count == Room_Number)
         {
-            Pos = new Coordinate(0, 0),
-            Width = Random.Range(Room_MinSize, Room_MaxSize),
-            Height =  Random.Range(Room_MinSize, Room_MaxSize)
-        };
-
-        AddRandomDoorToRoom(room);
-
-        return room;
+            return true;
+        }
+        else
+        {
+            this.GenRoom();
+            return false;
+        }
     }
 
-    void AddRandomDoorToRoom(Room room)
+    void Generate()
     {
-        Coordinate doorPos;
-        Direction dir =  Direction.Up; //(Direction) Random.Range(0,3);
-        switch(dir)
+        this.rooms.Clear();
+        for (int i = 0; i < Room_Number; i++)
         {
-            case Direction.Up:
-            {
-                doorPos.X = room.Pos.X + Random.Range(1, room.Width-1);
-                doorPos.Y = room.Pos.Y + room.Height;
-                break;
-            }
-            case Direction.Right:
-            {
-                doorPos.X = room.Pos.X + room.Width;
-                doorPos.Y = room.Pos.Y + Random.Range(1, room.Height-1);
-                break;
-            }
-            case Direction.Down:
-            {
-                doorPos.X = room.Pos.X + Random.Range(1, room.Width-1);
-                doorPos.Y = room.Pos.Y;
-                break;
-            }
-            case Direction.Left:
-            {
-                doorPos.X = room.Pos.X;
-                doorPos.Y = room.Pos.Y + Random.Range(1, room.Height);
-                break;
-            }
-            default:
-                throw new UnityException("Nope!");
+            this.GenRoom();
         }
-
-        room.Doors.Add(new Door(doorPos, dir, room));
     }
 
-    void TryGenRoom()
+    void AddRoom(Room room)
     {
-        if (this.rooms.Count == this.Room_Number)
-        {
-            Debug.Log("Gened all rooms");
-            return;
-        }
+        this.rooms.Add(room);
+        this.LevelDrawer.DrawRoom( GetTilesForRoom(room) );
+    }
 
-        //if last room do not forget to add end
-
-
+    void GenRoom()
+    {
         //get all doors with empty rooms
         List<Door> doors = new List<Door>();
-        foreach(var r in this.rooms)
+        foreach (var r in this.rooms)
         {
+            bool foundEmptyDoor = false;
             foreach (var d in r.Doors)
             {
                 if (d.Rooms[1] == null)
                 {
+                    foundEmptyDoor = true;
                     doors.Add(d);
                 }
             }
+            if (foundEmptyDoor)
+                break;
         }
+
+        //gen new room
+        var newRoom = new Room()
+        {
+            Width = Random.Range(Room_MinSize, Room_MaxSize+1),
+            Height = Random.Range(Room_MinSize, Room_MaxSize+1)
+        };
 
         if (doors.Count == 0)
         {
-            throw new UnityException("Bah! No doors? This can't be!");
+            //first room
+            newRoom.Pos = new Coordinate(0, 0);
+        }
+        else
+        {
+            Door door = doors[ Random.Range(0, doors.Count) ] ;
+
+            this.FindPosForNewRoomOnDoor(door, newRoom);
+
+            newRoom.AddDoor(door);
         }
 
-        //choose 1 at random
-        Door door = doors[ Random.Range(0, doors.Count - 1) ] ;
-
-        //gen new room
-        var oldRoom = door.Rooms[0];
-        var newRoom = new Room()
+        //add doors equal to or less than remaining rooms
+        int doorsToAdd = Room_MaxDoorCount - 1;
+        doorsToAdd = Mathf.Min(doorsToAdd, Room_Number - this.rooms.Count - 1); //-1 because we add current room at the end
+        Debug.Log("max doorsToAdd " + doorsToAdd);
+        if (doorsToAdd > 0)
         {
-            Width = Random.Range(Room_MinSize, Room_MaxSize),
-            Height =  Random.Range(Room_MinSize, Room_MaxSize)
-        };
+            doorsToAdd = Random.Range(1, doorsToAdd+1);
+        }
+        Debug.Log("doorsToAdd " + doorsToAdd);
 
+        for (int i = 0; i < doorsToAdd; i++)
+        {
+            newRoom.AddRandomDoorToRoom();
+        }
+
+        this.AddRoom(newRoom);
+    }
+
+    void FindPosForNewRoomOnDoor(Door door, Room newRoom)
+    {
+        var oldRoom = door.Rooms[0];
         var posOptions = new List<Coordinate>();
         switch (door.Dir)
         {
             case Direction.Up:
             {
                 int y = oldRoom.Pos.Y + oldRoom.Height;
-                for (int x = door.Pos.X - newRoom.Width+1; x < door.Pos.X + newRoom.Width -2; x++)
+                for (int x = door.Pos.X - (newRoom.Width - 1); x < door.Pos.X - 1; x++)
                 {
-                    posOptions.Add( new Coordinate( x, y ) );
+                    posOptions.Add(new Coordinate(x, y));
                 }
                 break;
             }
             case Direction.Down:
             {
-//                float y = door.Rooms[0].Pos.Y + door.Rooms[0].Height;
-
+                int y = oldRoom.Pos.Y - newRoom.Height;
+                for (int x = door.Pos.X - (newRoom.Width - 1); x < door.Pos.X - 1; x++)
+                {
+                    posOptions.Add(new Coordinate(x, y));
+                }
+                break;
+            }
+            case Direction.Left:
+            {
+                int x = oldRoom.Pos.X - newRoom.Width;
+                for (int y = door.Pos.Y - (newRoom.Height - 1); y < door.Pos.Y - 1; y++)
+                {
+                    posOptions.Add(new Coordinate(x, y));
+                }
+                break;
+            }
+            case Direction.Right:
+            {
+                int x = oldRoom.Pos.X + oldRoom.Width;
+                for (int y = door.Pos.Y - (newRoom.Height - 1); y < door.Pos.Y - 1; y++)
+                {
+                    posOptions.Add(new Coordinate(x, y));
+                }
                 break;
             }
             default:
                 break;
         }
-
         for (int i = posOptions.Count - 1; i >= 0; i--)
         {
-            int index = Random.Range(0, posOptions.Count -1);
-            var posOption = posOptions[ index ];
+            int index = Random.Range(0, posOptions.Count);
+            var posOption = posOptions[index];
             posOptions.RemoveAt(index);
-
             newRoom.Pos = posOption;
             if (!IsRoomCollidingWithOtherRoom(newRoom))
             {
                 break;
             }
         }
-
-        newRoom.AddDoor(door);
-
-        this.rooms.Add(newRoom);
-
-        //add doors equal to or less than remaining rooms
-        //recurse
     }
 
     bool IsRoomCollidingWithOtherRoom(Room room)
@@ -358,10 +321,30 @@ public class LevelGenerator : MonoBehaviour
         return false;
     }
 
-//    if (rect1.x < rect2.x + rect2.width &&
-//   rect1.x + rect1.width > rect2.x &&
-//   rect1.y < rect2.y + rect2.height &&
-//   rect1.height + rect1.y > rect2.y) {
-//    // collision detected!
-//}
+    static List<Tile> GetTilesForRoom(Room room)
+    {
+        var tiles = new List<Tile>(room.Width * room.Height);
+        for (int x = 0; x <= room.Width; x++)
+        {
+            for (int y = 0; y <= room.Height; y++)
+            {
+                var pos = new Coordinate(x + room.Pos.X, y + room.Pos.Y);
+                var tile = new Tile() {
+                    Pos = pos,
+                    Type = TileType.Ground
+                };
+                //                    if (pos == startPos)
+                //                    {
+                //                        tile.Type = TileType.Start;
+                //                    }
+                //                    else
+                if ((x == 0 || y == 0 || x == room.Width || y == room.Height) && !room.IsDoorOn(pos))
+                {
+                    tile.Type = TileType.Wall;
+                }
+                tiles.Add(tile);
+            }
+        }
+        return tiles;
+    }
 }

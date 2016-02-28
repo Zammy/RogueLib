@@ -13,22 +13,35 @@ public class LevelDrawer : MonoBehaviour
 
     public Transform Level;
 
-    public void Draw(List<Tile> tiles)
-    {
-//        List<GameObject> oldTiles = new List<GameObject>();
-//        foreach (Transform item in this.Level)
-//        {
-//            oldTiles.Add(item.gameObject);
-//        }
-//        foreach (var go in oldTiles)
-//        {
-//            go.transform.SetParent(null);
-//            Destroy(go);
-//        }
+    List<Transform> roomsParents = new List<Transform>();
 
+    public void DrawRoom(List<Tile> tiles)
+    {
+        GameObject roomParent = new GameObject();
+        roomParent.transform.position = Vector3.zero;
+        roomParent.name = "Room " + this.roomsParents.Count;
+
+        AddTilesTo(tiles, roomParent.transform);
+
+        this.roomsParents.Add(roomParent.transform);
+    }
+
+    public void ClearRooms()
+    {
+        foreach (var roomTrans in this.roomsParents)
+        {
+            roomTrans.SetParent(null);
+            Destroy(roomTrans.gameObject);
+        }
+
+        this.roomsParents.Clear();
+    }
+
+    void AddTilesTo(List<Tile> tiles, Transform parent)
+    {
         foreach (var tile in tiles)
         {
-            Vector2 pos = new Vector2( TileSize * tile.Pos.X, TileSize * tile.Pos.Y );
+            Vector2 pos = new Vector2(TileSize * tile.Pos.X, TileSize * tile.Pos.Y);
             GameObject prefabToUse = null;
             switch (tile.Type)
             {
@@ -55,9 +68,8 @@ public class LevelDrawer : MonoBehaviour
                 default:
                     break;
             }
-
-            var tileGo = (GameObject) Instantiate(prefabToUse, pos, Quaternion.identity);
-            tileGo.transform.SetParent(this.Level);
+            var tileGo = (GameObject)Instantiate(prefabToUse, pos, Quaternion.identity);
+            tileGo.transform.SetParent(parent);
         }
     }
 }
