@@ -25,6 +25,11 @@
         return !(a.X == b.X && a.Y == b.Y);
     }
 
+    public static Coordinate operator +(Coordinate a, Coordinate b)
+    {
+        return new Coordinate(a.X + b.X, a.Y + b.Y);
+    }
+
     public override bool Equals(object obj)
     {
         if (obj is Coordinate)
@@ -42,6 +47,15 @@
     public override string ToString()
     {
         return string.Format("({0}, {1})", this.X, this.Y);
+    }
+
+    static Coordinate zero = new Coordinate();
+    public static Coordinate Zero
+    {
+        get
+        {
+            return zero;
+        }
     }
 }
 

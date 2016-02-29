@@ -61,7 +61,7 @@ namespace BSP
                 roomObj.name = "Room";
                 var roomRectTrans = roomObj.transform as RectTransform;
                 roomRectTrans.sizeDelta = new Vector2( node.Room.Width, node.Room.Height );
-                roomRectTrans.anchoredPosition = new Vector2( node.Room.Pos.X, node.Room.Pos.Y);
+                roomRectTrans.anchoredPosition = new Vector2( node.Room.LocalPos.X, node.Room.LocalPos.Y);
             }
 
             var color = new Color( Random.Range(0.5f, 1f), Random.Range(0.25f,1f), Random.Range(0.25f, 0.75f));
@@ -69,7 +69,7 @@ namespace BSP
 
             var rectTrans = nodeObj.transform as RectTransform;
             rectTrans.sizeDelta = new Vector2( node.Width, node.Height );
-            rectTrans.anchoredPosition = new Vector2( node.Pos.X, node.Pos.Y);
+            rectTrans.anchoredPosition = new Vector2( node.LocalPos.X, node.LocalPos.Y);
 
             return nodeObj.transform;
         }

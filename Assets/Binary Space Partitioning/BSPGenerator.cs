@@ -5,7 +5,8 @@ namespace BSP
 {
     public class BinaryNode
     {
-        public Coordinate Pos;
+        public Coordinate LocalPos;
+        public Coordinate GlobalPos;
         public int Width;
         public int Height;
 
@@ -13,9 +14,10 @@ namespace BSP
 
         public Room Room {get; private set; }
 
-        public BinaryNode(Coordinate pos, int width, int height)
+        public BinaryNode(Coordinate local, Coordinate glob, int width, int height)
         {
-            this.Pos = pos;
+            this.LocalPos = local;
+            this.GlobalPos = glob;
             this.Width = width;
             this.Height = height;
         }
@@ -30,9 +32,11 @@ namespace BSP
             var room = new Room();
 
             var newPos = new Coordinate ();
-            newPos.X = Random.Range(0, this.Width/2);
-            newPos.Y = Random.Range(0, this.Height/2);
-            room.Pos = newPos;
+            newPos.X = Random.Range(0, Mathf.Min(this.Width/2, this.Width - MIN_ROOM_SIDE));
+            newPos.Y = Random.Range(0, Mathf.Min(this.Height/2, this.Height -MIN_ROOM_SIDE));
+            room.LocalPos = newPos;
+
+            room.GlobalPos = this.GlobalPos + room.LocalPos;
 
             room.Width = Random.Range(MIN_ROOM_SIDE, this.Width - newPos.X  );
             room.Height = Random.Range(MIN_ROOM_SIDE, this.Height - newPos.Y );
@@ -43,7 +47,8 @@ namespace BSP
 
     public class Room
     {
-        public Coordinate Pos;
+        public Coordinate LocalPos;
+        public Coordinate GlobalPos;
         public int Width;
         public int Height;
     }
@@ -75,7 +80,7 @@ namespace BSP
 
         public void GenAndDraw()
         {
-            root = new BinaryNode(new Coordinate(0, 0), DUN_WIDTH, DUN_HEIGHT);
+            root = new BinaryNode(Coordinate.Zero, Coordinate.Zero, DUN_WIDTH, DUN_HEIGHT);
            
             Divide(root);
 
@@ -101,14 +106,14 @@ namespace BSP
             if (direction == 0) // split vertically
             {
                 int x = Random.Range(MIN_LEAF_SIDE, node.Width-MIN_LEAF_SIDE);
-                node.Leaves[0] = new BinaryNode(new Coordinate(), x, node.Height);
-                node.Leaves[1] = new BinaryNode(new Coordinate(x, 0), node.Width - x, node.Height);
+                node.Leaves[0] = new BinaryNode(Coordinate.Zero, new Coordinate(node.GlobalPos), x, node.Height);
+                node.Leaves[1] = new BinaryNode(new Coordinate(x, 0), new Coordinate(node.GlobalPos.X + x, node.GlobalPos.Y), node.Width - x, node.Height);
             }
             else // split horizontally
             {
                 int y = Random.Range(MIN_LEAF_SIDE, node.Height-MIN_LEAF_SIDE);
-                node.Leaves[0] = new BinaryNode(new Coordinate(), node.Width, y);
-                node.Leaves[1] = new BinaryNode(new Coordinate(0, y), node.Width, node.Height - y);
+                node.Leaves[0] = new BinaryNode(Coordinate.Zero, new Coordinate(node.GlobalPos), node.Width, y);
+                node.Leaves[1] = new BinaryNode(new Coordinate(0, y), new Coordinate(node.GlobalPos.X, node.GlobalPos.Y + y), node.Width, node.Height - y);
             }
 
             Divide(node.Leaves[0]);
