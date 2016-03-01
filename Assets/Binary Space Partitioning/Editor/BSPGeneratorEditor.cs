@@ -11,18 +11,9 @@ namespace BSP
         {
             base.OnInspectorGUI();
 
-//            if (GUILayout.Button("Step"))
-//            {
-//                bool done = ((LevelGenerator)target).Step();
-//                if (done)
-//                {
-//                    EditorUtility.DisplayDialog("Gen", "Generated all rooms!", "ok");
-//                }
-//            }
-
-            if (GUILayout.Button("GenAndDrawAll"))
+            if (GUILayout.Button("GenAndDrawRooms"))
             {
-                ((BSPGenerator)target).GenAndDraw();
+                ((BSPGenerator)target).GenAndDrawRooms();
             }
         }
 

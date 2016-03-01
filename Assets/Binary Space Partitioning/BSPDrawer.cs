@@ -12,12 +12,51 @@ namespace BSP
 
         public float DrawSpeed = 1f;
 
-        const float LAYER_DEPTH = 5;
-        //todo takes binary tree and draws it on layers with different colors
-
         public void DrawNode(BinaryNode node)
         {
             StartCoroutine ( this.DrawNodes(new BinaryNode[] { node }, this.Canvas ) );
+        }
+
+        public void DrawRoomsAndCorridors(List<Room> rooms, List<Corridor> corridors)
+        {
+            foreach (var room in rooms)
+            {
+                var roomObj = (GameObject) Instantiate(NodePrefab);
+                roomObj.transform.SetParent(this.Canvas);
+                roomObj.GetComponent<Image>().color = Color.black;
+                roomObj.name = "Room";
+
+                var roomRectTrans = roomObj.transform as RectTransform;
+                roomRectTrans.sizeDelta = new Vector2( room.Width, room.Height );
+                roomRectTrans.anchoredPosition = new Vector2( room.GlobalPos.X, room.GlobalPos.Y);
+            }
+
+            foreach (var corridor in corridors)
+            {
+                Point prevPoint = corridor.Points[0];
+                for (int i = 1; i < corridor.Points.Count; i++)
+                {
+                    Point newPoint = corridor.Points[i];
+                    var corridorSig = (GameObject) Instantiate(NodePrefab);
+                    corridorSig.transform.SetParent(this.Canvas);
+                    corridorSig.GetComponent<Image>().color = Color.red;
+                    corridorSig.name = "Corridor " + (i-1).ToString();
+
+                    var corridorRectTrans = corridorSig.transform as RectTransform;
+                    if (newPoint.X > prevPoint.X || newPoint.Y > prevPoint.Y)
+                    {
+                        corridorRectTrans.anchoredPosition = new Vector2( prevPoint.X, prevPoint.Y);
+                    }
+                    else
+                    {
+                        corridorRectTrans.anchoredPosition = new Vector2( newPoint.X, newPoint.Y);
+                    }
+
+                    corridorRectTrans.sizeDelta = new Vector2( Mathf.Max(1, Mathf.Abs( newPoint.X - prevPoint.X ) + 1), 
+                                                        Mathf.Max(1, Mathf.Abs( newPoint.Y - prevPoint.Y ) + 1 ));
+                    prevPoint = newPoint;
+                }
+            }
         }
 
         IEnumerator DrawNodes(BinaryNode[] nodes, Transform parent)
@@ -26,7 +65,7 @@ namespace BSP
             {
                 var leaves = new List<BinaryNode>();
 
-                foreach(var leaf in node.Leaves)
+                foreach(var leaf in node.Children)
                 {
                     if (leaf != null)
                     {
@@ -34,10 +73,7 @@ namespace BSP
                     }
                 }
 
-//                if (leaves.Count == 0)
-//                {
                 var nodeTrans = Draw (node, parent, leaves.Count == 0);
-//                }
 
                 yield return new WaitForSeconds(this.DrawSpeed);
 

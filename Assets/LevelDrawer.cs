@@ -15,6 +15,8 @@ public class LevelDrawer : MonoBehaviour
 
     List<Transform> roomsParents = new List<Transform>();
 
+    int counter = 0;
+
     public void DrawRoom(List<Tile> tiles)
     {
         GameObject roomParent = new GameObject();
@@ -24,6 +26,15 @@ public class LevelDrawer : MonoBehaviour
         AddTilesTo(tiles, roomParent.transform);
 
         this.roomsParents.Add(roomParent.transform);
+    }
+
+    public void DrawDungeon(List<Tile> tiles)
+    {
+        GameObject roomParent = new GameObject();
+        roomParent.transform.position = Vector3.zero;
+        roomParent.name = "Dungeon " + counter++;
+
+        AddTilesTo(tiles, roomParent.transform);
     }
 
     public void ClearRooms()

@@ -1,40 +1,55 @@
-﻿public struct Coordinate
+﻿using UnityEngine;
+
+public struct Point
 {
     public int X;
     public int Y;
 
-    public Coordinate (int x, int y)
+    public Point (int x, int y)
     {
         this.X = x;
         this.Y = y;
     }
 
-    public Coordinate(Coordinate toCopy)
+    public Point(Point toCopy)
     {
         this.X = toCopy.X;
         this.Y = toCopy.Y;
     }
 
-    public static bool operator ==(Coordinate a, Coordinate b) 
+    public int Length
+    {
+        get
+        {
+            return Mathf.Abs(this.X) + Mathf.Abs(this.Y);
+        }
+    }
+
+    public static bool operator ==(Point a, Point b) 
     {
         return a.X == b.X && a.Y == b.Y;
     }
 
-    public static bool operator !=(Coordinate a, Coordinate b) 
+    public static bool operator !=(Point a, Point b) 
     {
         return !(a.X == b.X && a.Y == b.Y);
     }
 
-    public static Coordinate operator +(Coordinate a, Coordinate b)
+    public static Point operator +(Point a, Point b)
     {
-        return new Coordinate(a.X + b.X, a.Y + b.Y);
+        return new Point(a.X + b.X, a.Y + b.Y);
+    }
+
+    public static Point operator -(Point a, Point b)
+    {
+        return new Point(a.X - b.X, a.Y - b.Y);
     }
 
     public override bool Equals(object obj)
     {
-        if (obj is Coordinate)
+        if (obj is Point)
         {
-            return this == (Coordinate)obj;
+            return this == (Point)obj;
         }
         return base.Equals(obj);
     }
@@ -49,8 +64,8 @@
         return string.Format("({0}, {1})", this.X, this.Y);
     }
 
-    static Coordinate zero = new Coordinate();
-    public static Coordinate Zero
+    static Point zero = new Point();
+    public static Point Zero
     {
         get
         {
@@ -67,9 +82,9 @@ public enum TileType
     End
 }
 
-public struct Tile
+public class Tile
 {
-    public Coordinate Pos;
+    public Point Pos;
     public TileType Type;
 }
 
