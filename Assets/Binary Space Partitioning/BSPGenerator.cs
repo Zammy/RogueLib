@@ -1,11 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using RogueLib;
 
 namespace BSP
 {
-   
-
     //binary space partitioning
     public class BSPGenerator : MonoBehaviour 
     {
@@ -182,9 +181,9 @@ namespace BSP
         void DrawWithTiles()
         {
             Tile[,] grid = new Tile[DUN_WIDTH, DUN_HEIGHT];
-            System.Action<Tile> addTile = (Tile tile) => 
+            System.Action<Tile, Point> addTile = (Tile tile, Point pos) => 
             {
-                grid[tile.Pos.X, tile.Pos.Y] = tile;
+                grid[pos.X, pos.Y] = tile;
             };
             foreach (var room in this.rooms)
             {
@@ -193,36 +192,31 @@ namespace BSP
                 for (int x = room.GlobalPos.X; x < room.GlobalPos.X + room.Width; x++)
                 {
                     var tile = new Tile();
-                    tile.Pos = new Point(x, bottomY);
                     tile.Type = TileType.Wall;
-                    addTile(tile);
+                    addTile(tile, new Point(x, bottomY));
                     tile = new Tile();
-                    tile.Pos = new Point(x, topY);
                     tile.Type = TileType.Wall;
-                    addTile(tile);
+                    addTile(tile, new Point(x, topY));
                 }
                 int leftX = room.GlobalPos.X ;
                 int rightX = room.GlobalPos.X + room.Width -1;
                 for (int y = room.GlobalPos.Y; y < room.GlobalPos.Y + room.Height; y++)
                 {
                     var tile = new Tile();
-                    tile.Pos = new Point(leftX, y);
                     tile.Type = TileType.Wall;
-                    addTile(tile);
+                    addTile(tile, new Point(leftX, y));
 
                     tile = new Tile();
-                    tile.Pos = new Point(rightX, y);
                     tile.Type = TileType.Wall;
-                    addTile(tile);
+                    addTile(tile, new Point(rightX, y));
                 }
                 for (int x = room.GlobalPos.X +1; x < room.GlobalPos.X + room.Width -1; x++)
                 {
                     for (int y = room.GlobalPos.Y +1; y < room.GlobalPos.Y + room.Height-1; y++)
                     {
                         var tile = new Tile();
-                        tile.Pos = new Point(x, y);
                         tile.Type = TileType.Ground;
-                        addTile(tile);
+                        addTile(tile,  new Point(x, y));
                     }
                 }
             }
@@ -233,9 +227,8 @@ namespace BSP
                 {
                     addTile( new Tile()
                     {
-                        Pos = p,
                         Type = TileType.Wall
-                    });
+                    }, p);
                 }
             };
 
@@ -245,10 +238,7 @@ namespace BSP
                 {
                     if( grid[a.X, y] == null )
                     {
-                        addTile( new Tile()
-                        {
-                            Pos = new Point( a.X, y )
-                        });
+                        addTile( new Tile(), new Point( a.X, y ));
                     }
 
                     grid[a.X, y].Type = TileType.Ground;
@@ -268,10 +258,7 @@ namespace BSP
                 {
                     if( grid[x, a.Y] == null )
                     {
-                        grid[x, a.Y] = new Tile()
-                        {
-                            Pos = new Point( x, a.Y )
-                        };
+                        addTile( new Tile(),  new Point( x, a.Y ));
                     }
 
                     grid[x, a.Y].Type = TileType.Ground;
@@ -318,20 +305,9 @@ namespace BSP
                 }
             }
 
-            List<Tile> tiles = new List<Tile>();
+            this.LevelDrawer.DrawDungeon(grid);
 
-            for (int i = 0; i < grid.GetLength(0); i++)
-            {
-                for (int y = 0; y < grid.GetLength(1); y++) 
-                {
-                    if (grid[i, y] != null)
-                    {
-                        tiles.Add(grid[i, y]);
-                    }
-                }
-            }
-
-            this.LevelDrawer.DrawDungeon(tiles);
+            LevelMng.Instance.LoadLevel(grid);
         }
     }
 }

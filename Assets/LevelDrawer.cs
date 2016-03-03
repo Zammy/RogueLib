@@ -2,85 +2,69 @@
 using System.Collections;
 using System.Collections.Generic;
 
-public class LevelDrawer : MonoBehaviour 
+namespace RogueLib
 {
-    public GameObject GroundPrefab;
-    public GameObject WallPrefab;
-    public GameObject StartPrefab;
-    public GameObject EndPrefab;
-
-    public float TileSize;
-
-    public Transform Level;
-
-    List<Transform> roomsParents = new List<Transform>();
-
-    int counter = 0;
-
-    public void DrawRoom(List<Tile> tiles)
+    public class LevelDrawer : MonoBehaviour 
     {
-        GameObject roomParent = new GameObject();
-        roomParent.transform.position = Vector3.zero;
-        roomParent.name = "Room " + this.roomsParents.Count;
+        public GameObject GroundPrefab;
+        public GameObject WallPrefab;
+        public GameObject StartPrefab;
+        public GameObject EndPrefab;
 
-        AddTilesTo(tiles, roomParent.transform);
+        public float TileSize;
 
-        this.roomsParents.Add(roomParent.transform);
-    }
+        public Transform Level;
 
-    public void DrawDungeon(List<Tile> tiles)
-    {
-        GameObject roomParent = new GameObject();
-        roomParent.transform.position = Vector3.zero;
-        roomParent.name = "Dungeon " + counter++;
+        private Tile[,] tiles;
 
-        AddTilesTo(tiles, roomParent.transform);
-    }
-
-    public void ClearRooms()
-    {
-        foreach (var roomTrans in this.roomsParents)
+        public void DrawDungeon(Tile[,] tiles)
         {
-            roomTrans.SetParent(null);
-            Destroy(roomTrans.gameObject);
+            this.tiles = tiles;
+
+            AddTilesTo(tiles, this.Level);
         }
 
-        this.roomsParents.Clear();
-    }
-
-    void AddTilesTo(List<Tile> tiles, Transform parent)
-    {
-        foreach (var tile in tiles)
+        void AddTilesTo(Tile[,] tiles, Transform parent)
         {
-            Vector2 pos = new Vector2(TileSize * tile.Pos.X, TileSize * tile.Pos.Y);
-            GameObject prefabToUse = null;
-            switch (tile.Type)
+            for (int x = 0; x < tiles.GetLength(0); x++)
             {
-                case TileType.Ground:
+                for (int y = 0; y < tiles.GetLength(1); y++)
                 {
-                    prefabToUse = this.GroundPrefab;
-                    break;
+                    Vector2 pos = new Vector2(TileSize * x, TileSize * y);
+                    var tile = tiles[x, y];
+                    if (tile == null)
+                        continue;
+
+                    GameObject prefabToUse = null;
+                    switch (tile.Type)
+                    {
+                        case TileType.Ground:
+                        {
+                            prefabToUse = this.GroundPrefab;
+                            break;
+                        }
+                        case TileType.Wall:
+                        {
+                            prefabToUse = this.WallPrefab;
+                            break;
+                        }
+                        case TileType.Start:
+                        {
+                            prefabToUse = this.StartPrefab;
+                            break;
+                        }
+                        case TileType.End:
+                        {
+                            prefabToUse = this.EndPrefab;
+                            break;
+                        }
+                        default:
+                            break;
+                    }
+                    var tileGo = (GameObject)Instantiate(prefabToUse, pos, Quaternion.identity);
+                    tileGo.transform.SetParent(parent);
                 }
-                case TileType.Wall:
-                {
-                    prefabToUse = this.WallPrefab;
-                    break;
-                }
-                case TileType.Start:
-                {
-                    prefabToUse = this.StartPrefab;
-                    break;
-                }
-                case TileType.End:
-                {
-                    prefabToUse = this.EndPrefab;
-                    break;
-                }
-                default:
-                    break;
             }
-            var tileGo = (GameObject)Instantiate(prefabToUse, pos, Quaternion.identity);
-            tileGo.transform.SetParent(parent);
         }
     }
 }

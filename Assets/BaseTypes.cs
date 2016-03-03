@@ -1,105 +1,122 @@
 ﻿using UnityEngine;
 
-public struct Point
+namespace RogueLib
 {
-    public int X;
-    public int Y;
-
-    public Point (int x, int y)
+    public struct Point
     {
-        this.X = x;
-        this.Y = y;
-    }
+        public int X;
+        public int Y;
 
-    public Point(Point toCopy)
-    {
-        this.X = toCopy.X;
-        this.Y = toCopy.Y;
-    }
-
-    public int Length
-    {
-        get
+        public Point (int x, int y)
         {
-            return Mathf.Abs(this.X) + Mathf.Abs(this.Y);
+            this.X = x;
+            this.Y = y;
+        }
+
+        public Point(Point toCopy)
+        {
+            this.X = toCopy.X;
+            this.Y = toCopy.Y;
+        }
+
+        public int Length
+        {
+            get
+            {
+                //manhattan
+                return Mathf.Abs(this.X) + Mathf.Abs(this.Y);
+            }
+        }
+
+        public static bool operator ==(Point a, Point b) 
+        {
+            return a.X == b.X && a.Y == b.Y;
+        }
+
+        public static bool operator !=(Point a, Point b) 
+        {
+            return !(a.X == b.X && a.Y == b.Y);
+        }
+
+        public static Point operator +(Point a, Point b)
+        {
+            return new Point(a.X + b.X, a.Y + b.Y);
+        }
+
+        public static Point operator -(Point a, Point b)
+        {
+            return new Point(a.X - b.X, a.Y - b.Y);
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is Point)
+            {
+                return this == (Point)obj;
+            }
+            return base.Equals(obj);
+        }
+
+        public override int GetHashCode()
+        {
+            return 17 + this.X + this.Y * 23;
+        }
+
+        public override string ToString()
+        {
+            return string.Format("({0}, {1})", this.X, this.Y);
+        }
+
+        static Point zero = new Point();
+        public static Point Zero
+        {
+            get
+            {
+                return zero;
+            }
         }
     }
 
-    public static bool operator ==(Point a, Point b) 
+    public enum TileType
     {
-        return a.X == b.X && a.Y == b.Y;
+        Wall,
+        Ground,
+        Start,
+        End
     }
 
-    public static bool operator !=(Point a, Point b) 
+    public class Tile
     {
-        return !(a.X == b.X && a.Y == b.Y);
-    }
-
-    public static Point operator +(Point a, Point b)
-    {
-        return new Point(a.X + b.X, a.Y + b.Y);
-    }
-
-    public static Point operator -(Point a, Point b)
-    {
-        return new Point(a.X - b.X, a.Y - b.Y);
-    }
-
-    public override bool Equals(object obj)
-    {
-        if (obj is Point)
+        public Tile()
         {
-            return this == (Point)obj;
+            this.Type = TileType.Ground;
         }
-        return base.Equals(obj);
-    }
 
-    public override int GetHashCode()
-    {
-        return 17 + this.X + this.Y * 23;
-    }
+        public TileType Type;
 
-    public override string ToString()
-    {
-        return string.Format("({0}, {1})", this.X, this.Y);
-    }
-
-    static Point zero = new Point();
-    public static Point Zero
-    {
-        get
+        public bool IsPassable
         {
-            return zero;
+            get
+            {
+                return this.Type != TileType.Wall;
+            }
         }
     }
-}
 
-public enum TileType
-{
-    Wall,
-    Ground,
-    Start,
-    End
-}
-
-public class Tile
-{
-    public Point Pos;
-    public TileType Type;
-}
-
-public enum Direction
-{
-    Up = 0,
-    Right = 1,
-    Down = 2,
-    Left = 3
-}
-
-public static class DirectionExt
-{
-    public static Direction Opposite(this Direction dir)
+    public enum Direction
     {
-        return (Direction) (((int)dir + 2) % 4);
+        Up = 0,
+        Right = 1,
+        Down = 2,
+        Left = 3
     }
+
+    public static class DirectionExt
+    {
+        public static Direction Opposite(this Direction dir)
+        {
+            return (Direction) (((int)dir + 2) % 4);
+        }
+    }
+
 }
