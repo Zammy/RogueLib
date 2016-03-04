@@ -25,11 +25,9 @@ namespace RogueLib
             this.grid = tiles;
         }
 
+      
 
-
-
-
-
+        #region Path Finder
 
         private class Step : IEquatable<Step>
         {
@@ -210,6 +208,7 @@ namespace RogueLib
 
             return path.ToArray();
         }
+        #endregion
     }
 
 }
